@@ -39,10 +39,10 @@ from providers import get_llm_provider
 # CHÍNH XÁC với thứ tự Role 3 liệt kê trong REACT_SYSTEM_PROMPT. Nếu Role 3
 # đổi thứ tự tham số trong prompt, phải sửa lại dict này cho khớp.
 POSITIONAL_PARAMS = {
-    "get_order_status": ["order_id", "phone_last4"],
-    "check_return_eligibility": ["order_id", "item_id", "reason", "phone_last4"],
+    "get_order_status": ["order_id"],
+    "check_return_eligibility": ["order_id", "item_id", "reason"],
     "create_return_request": [
-        "order_id", "item_id", "reason", "resolution", "phone_last4", "confirmed",
+        "order_id", "item_id", "reason", "resolution", "confirmed",
     ],
 }
 
@@ -263,26 +263,17 @@ if __name__ == "__main__":
     print(f"🔌 LLM Provider đang hoạt động: {provider.__class__.__name__} (Model: {model_name})")
 
     tests = load_test_cases()
-    print(f"✅ Đã tải thành công {len(tests)} Test Cases từ config/test_cases.json")
+    print(f"✅ Đã tải thành công {len(tests)} Test Cases từ config/test_cases.json\n")
 
-    # Chạy TOÀN BỘ test cases (không chỉ câu đầu tiên), để Role 1/5 có đủ
-    # log Thought->Action->Observation cho cả câu đơn giản, multi-step và
-    # edge case (bẫy Guardrail), dán trực tiếp vào docs/trace_eval.md.
-    for idx, case in enumerate(tests):
-        question = case["question"] if isinstance(case, dict) else case
-        case_id = case.get("id", idx + 1) if isinstance(case, dict) else idx + 1
-        category = case.get("category", "") if isinstance(case, dict) else ""
+    for i, test in enumerate(tests, 1):
+        query = test["question"] if isinstance(test, dict) else test
+        category = test.get("category", "") if isinstance(test, dict) else ""
+        print(f"\n==================================================")
+        print(f"🧪 TEST CASE #{i}: {category}")
+        print(f"==================================================")
 
-        print("\n" + "=" * 70)
-        print(f"📋 TEST CASE #{case_id} {category}")
-        print("=" * 70)
+        print(f"\n--- DEMO 1: CHẠY TRÊN CHATBOT BASELINE ---")
+        run_baseline_chatbot(query, provider)
 
-        print("\n--- DEMO 1: CHẠY TRÊN CHATBOT BASELINE ---")
-        run_baseline_chatbot(question, provider)
-
-        print("\n--- DEMO 2: CHẠY TRÊN REACT AGENT ---")
-        run_react_agent(question, provider)
-
-    print("\n" + "=" * 70)
-    print(f"✅ Đã chạy xong toàn bộ {len(tests)} test cases.")
-    print("=" * 70)
+        print(f"\n--- DEMO 2: CHẠY TRÊN REACT AGENT ---")
+        run_react_agent(query, provider)
