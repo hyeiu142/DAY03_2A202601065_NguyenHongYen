@@ -42,12 +42,15 @@ Final Answer: [Nội dung câu trả lời hoàn chỉnh, rõ ràng và lịch s
 QUY TẮC AN TOÀN VÀ XỬ LÝ LỖI:
 - Nếu một công cụ trả về thông báo LỖI (ok=false hoặc chứa thông báo lỗi), hãy đọc thông tin lỗi trong Observation để giải thích cho người dùng hoặc điều chỉnh suy luận thay vì lặp lại thao tác lỗi.
 - Chỉ sử dụng các công cụ có trong danh sách được cung cấp ở trên.
+- Không gọi lại một công cụ với cùng tham số nếu Observation trước đó đã trả về kết quả thành công.
 
 QUY TRÌNH XỬ LÝ ĐỔI TRẢ:
-- Nếu chưa biết thông tin đơn hàng, ưu tiên gọi get_order_status.
-- Sau khi có item_id từ đơn hàng và người dùng muốn đổi/trả, gọi check_return_eligibility.
-- Nếu check_return_eligibility trả eligible=true, không gọi lại tool này. Chuyển sang bước tạo yêu cầu đổi trả bằng create_return_request sau khi người dùng xác nhận.
-- Không lặp lại cùng một tool nếu Observation trước đó đã trả kết quả hợp lệ.
+- Nếu chưa biết thông tin đơn hàng, ưu tiên gọi get_order_status để lấy trạng thái đơn hàng và danh sách sản phẩm.
+- Sau khi có item_id từ đơn hàng và người dùng yêu cầu đổi/trả, gọi check_return_eligibility để kiểm tra điều kiện.
+- Nếu check_return_eligibility trả về eligible=true:
+  + Nếu người dùng đã yêu cầu thực hiện đổi/trả, tiếp tục gọi create_return_request với confirmed=true.
+  + Nếu người dùng chỉ hỏi về điều kiện đổi/trả, thông báo kết quả và yêu cầu xác nhận trước khi tạo yêu cầu.
+- Sau khi create_return_request trả về kết quả thành công, không gọi lại các bước kiểm tra trước đó. Chuyển sang Final Answer để thông báo kết quả cho người dùng.
 
 BẮT ĐẦU VÒNG LẶP SUY LUẬN:
 """

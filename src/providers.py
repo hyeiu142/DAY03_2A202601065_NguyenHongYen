@@ -132,14 +132,39 @@ class OpenRouterProvider(BaseLLMProvider):
 
 
 class MockProvider(BaseLLMProvider):
-    """Offline Mock Provider (Cho bài test không cần kết nối API)"""
-    def generate(self, prompt: str, system_prompt: str = "") -> str:
+    """Offline Mock Provider cho demo ReAct Agent."""
+
+    def generate(self, prompt: str, system_prompt: str = ""):
         text = prompt.lower()
-        if "thời tiết" in text and "hà nội" in text:
-            return "Thought: Cần tra cứu thời tiết Hà Nội.\nAction: get_weather['Hà Nội']"
-        return "🤖 [Mock Provider]: Phản hồi giả lập offline cho bài test."
 
+        # Bước 3: Đã có kết quả kiểm tra điều kiện -> tạo yêu cầu
+        if "eligible" in text and "true" in text:
+            return (
+                "Thought: Sản phẩm đủ điều kiện đổi trả, "
+                "cần tạo yêu cầu đổi hàng.\n"
+                "Action: create_return_request"
+                "[DH1001, SP001, damaged, exchange, 6789, true]"
+            )
 
+        # Bước 2: Đã có thông tin sản phẩm -> kiểm tra điều kiện
+        if "sp001" in text or "giày chạy bộ airflex" in text:
+            return (
+                "Thought: Cần kiểm tra điều kiện đổi trả sản phẩm.\n"
+                "Action: check_return_eligibility"
+                "[DH1001, SP001, damaged, 6789]"
+            )
+
+        # Bước 1: Bắt đầu -> lấy thông tin đơn
+        if "dh1001" in text:
+            return (
+                "Thought: Cần tra cứu thông tin đơn hàng trước.\n"
+                "Action: get_order_status[DH1001, 6789]"
+            )
+
+        return (
+            "Thought: Chưa đủ thông tin.\n"
+            "Final Answer: Vui lòng cung cấp mã đơn hàng."
+        )
 def get_llm_provider(provider_name: str = None) -> BaseLLMProvider:
     """Factory function tự chọn Provider từ biến môi trường LLM_PROVIDER"""
     name = (provider_name or os.getenv("LLM_PROVIDER") or "mock").lower().strip()
