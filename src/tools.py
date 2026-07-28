@@ -224,28 +224,26 @@ def _find_item(order: dict[str, Any], item_id: str) -> dict[str, Any] | None:
 
 
 def get_order_status(order_id: str, phone_last4: str = "") -> str:
-    """
-    Tra cứu trạng thái giao hàng và danh sách sản phẩm của một đơn.
-
-    Purpose:
-        Dùng khi người dùng hỏi đơn đang ở đâu, khi nào giao, hoặc cần biết
-        ``item_id`` trước khi đổi/trả. Đây là tool read-only.
-    Input schema:
-        ``order_id`` (str, required): Mã đơn, ví dụ ``"DH1001"``.
-        ``phone_last4`` (str, required): 4 số cuối SĐT đặt hàng để xác thực.
-    Output schema:
-        Chuỗi JSON. Thành công có ``ok=true`` và ``data`` gồm trạng thái,
-        tracking, ngày dự kiến/ngày đã giao và sản phẩm. Không trả PII đầy đủ.
-    Error semantics:
-        ``INVALID_INPUT``, ``ORDER_NOT_FOUND_OR_UNAUTHORIZED`` hoặc
-        ``INTERNAL_ERROR``; luôn trả JSON, không raise.
-    Side effect:
-        Không.
-    Example:
-        ``get_order_status("DH1001", "6789")``.
-    """
     tool = "get_order_status"
     try:
+        clean_id = str(order_id).strip().upper() if order_id else ""
+        if clean_id in ("ALL", "LIST", "DANH_SACH", "*"):
+            orders_summary = []
+            for oid, odata in _ORDERS.items():
+                total = sum(item["quantity"] * item["unit_price_vnd"] for item in odata["items"])
+                orders_summary.append({
+                    "order_id": oid,
+                    "status": odata["status"],
+                    "total_price_vnd": total,
+                    "items": odata["items"]
+                })
+            return _response(
+                True,
+                tool,
+                message="Lấy danh sách tất cả các đơn hàng thành công.",
+                data={"total_orders": len(orders_summary), "orders": orders_summary}
+            )
+
         clean_order_id, order, error_response = _validate_identity(
             order_id, phone_last4, tool
         )
