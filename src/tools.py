@@ -70,6 +70,24 @@ _ORDERS: dict[str, dict[str, Any]] = {
             },
         ],
     },
+    "DH10023": {
+        "customer_phone_last4": "6789",
+        "status": "delivered",
+        "status_label": "Đã giao",
+        "created_at": "2026-07-23",
+        "delivered_at": "2026-07-25",
+        "tracking_code": "VNPOST-10023",
+        "estimated_delivery": None,
+        "items": [
+            {
+                "item_id": "SP002",
+                "name": "Áo khoác gió",
+                "quantity": 1,
+                "unit_price_vnd": 450_000,
+                "returnable": True,
+            }
+        ],
+    },
     "DH1002": {
         "customer_phone_last4": "2468",
         "status": "shipping",
@@ -166,9 +184,9 @@ def _clean_required(value: Any, field_name: str) -> tuple[str | None, str | None
 
 
 def _validate_identity(
-    order_id: Any, phone_last4: Any, tool: str
+    order_id: Any, phone_last4: Any = None, tool: str = ""
 ) -> tuple[str | None, dict[str, Any] | None, str | None]:
-    """Xác thực mã đơn và 4 số cuối điện thoại; không tiết lộ đơn tồn tại."""
+    """Xác thực mã đơn hàng."""
     clean_order_id, error = _clean_required(order_id, "order_id")
     if error:
         return None, None, _response(
@@ -176,27 +194,13 @@ def _validate_identity(
         )
     clean_order_id = clean_order_id.upper()
 
-    clean_phone, error = _clean_required(phone_last4, "phone_last4")
-    if error or clean_phone is None or not (
-        len(clean_phone) == 4 and clean_phone.isdigit()
-    ):
-        return None, None, _response(
-            False,
-            tool,
-            error_code="INVALID_INPUT",
-            message="'phone_last4' phải gồm đúng 4 chữ số.",
-        )
-
     order = _ORDERS.get(clean_order_id)
-    if order is None or order["customer_phone_last4"] != clean_phone:
+    if order is None:
         return None, None, _response(
             False,
             tool,
-            error_code="ORDER_NOT_FOUND_OR_UNAUTHORIZED",
-            message=(
-                "Không tìm thấy đơn hàng hoặc thông tin xác thực không khớp. "
-                "Vui lòng kiểm tra mã đơn và 4 số cuối điện thoại."
-            ),
+            error_code="ORDER_NOT_FOUND",
+            message=f"Không tìm thấy đơn hàng {clean_order_id} trong hệ thống.",
         )
     return clean_order_id, order, None
 
@@ -219,7 +223,7 @@ def _find_item(order: dict[str, Any], item_id: str) -> dict[str, Any] | None:
     )
 
 
-def get_order_status(order_id: str, phone_last4: str) -> str:
+def get_order_status(order_id: str, phone_last4: str = "") -> str:
     """
     Tra cứu trạng thái giao hàng và danh sách sản phẩm của một đơn.
 
@@ -286,7 +290,7 @@ def check_return_eligibility(
     order_id: str,
     item_id: str,
     reason: str,
-    phone_last4: str,
+    phone_last4: str = "",
     request_date: str = DEFAULT_REQUEST_DATE,
 ) -> str:
     """
@@ -447,7 +451,7 @@ def create_return_request(
     item_id: str,
     reason: str,
     resolution: str,
-    phone_last4: str,
+    phone_last4: str = "",
     confirmed: bool = False,
     request_date: str = DEFAULT_REQUEST_DATE,
 ) -> str:
@@ -604,20 +608,14 @@ TOOL_SPECS: list[dict[str, Any]] = [
     {
         "name": "get_order_status",
         "description": (
-            "Tra cứu trạng thái và item_id trong đơn sau khi xác thực 4 số cuối "
-            "điện thoại. Chỉ đọc, không thay đổi đơn."
+            "Tra cứu trạng thái và item_id trong đơn. Chỉ đọc, không thay đổi đơn."
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "order_id": {"type": "string", "description": "Mã đơn, VD DH1001"},
-                "phone_last4": {
-                    "type": "string",
-                    "pattern": "^[0-9]{4}$",
-                    "description": "4 số cuối SĐT đặt hàng",
-                },
             },
-            "required": ["order_id", "phone_last4"],
+            "required": ["order_id"],
             "additionalProperties": False,
         },
     },
@@ -632,14 +630,13 @@ TOOL_SPECS: list[dict[str, Any]] = [
                 "order_id": {"type": "string"},
                 "item_id": {"type": "string"},
                 "reason": {"type": "string", "enum": sorted(ALLOWED_REASONS)},
-                "phone_last4": {"type": "string", "pattern": "^[0-9]{4}$"},
                 "request_date": {
                     "type": "string",
                     "format": "date",
                     "default": DEFAULT_REQUEST_DATE,
                 },
             },
-            "required": ["order_id", "item_id", "reason", "phone_last4"],
+            "required": ["order_id", "item_id", "reason"],
             "additionalProperties": False,
         },
     },
@@ -659,7 +656,6 @@ TOOL_SPECS: list[dict[str, Any]] = [
                     "type": "string",
                     "enum": sorted(ALLOWED_RESOLUTIONS),
                 },
-                "phone_last4": {"type": "string", "pattern": "^[0-9]{4}$"},
                 "confirmed": {"type": "boolean", "const": True},
                 "request_date": {
                     "type": "string",
@@ -672,7 +668,6 @@ TOOL_SPECS: list[dict[str, Any]] = [
                 "item_id",
                 "reason",
                 "resolution",
-                "phone_last4",
                 "confirmed",
             ],
             "additionalProperties": False,
