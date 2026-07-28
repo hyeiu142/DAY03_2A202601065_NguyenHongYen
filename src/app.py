@@ -263,12 +263,26 @@ if __name__ == "__main__":
     print(f"🔌 LLM Provider đang hoạt động: {provider.__class__.__name__} (Model: {model_name})")
 
     tests = load_test_cases()
-    print(f"✅ Đã tải thành công {len(tests)} Test Cases từ config/test_cases.json\n")
+    print(f"✅ Đã tải thành công {len(tests)} Test Cases từ config/test_cases.json")
 
-    sample_query = tests[0]["question"] if isinstance(tests[0], dict) else tests[0]
+    # Chạy TOÀN BỘ test cases (không chỉ câu đầu tiên), để Role 1/5 có đủ
+    # log Thought->Action->Observation cho cả câu đơn giản, multi-step và
+    # edge case (bẫy Guardrail), dán trực tiếp vào docs/trace_eval.md.
+    for idx, case in enumerate(tests):
+        question = case["question"] if isinstance(case, dict) else case
+        case_id = case.get("id", idx + 1) if isinstance(case, dict) else idx + 1
+        category = case.get("category", "") if isinstance(case, dict) else ""
 
-    print("--- DEMO 1: CHẠY TRÊN CHATBOT BASELINE ---")
-    run_baseline_chatbot(sample_query, provider)
+        print("\n" + "=" * 70)
+        print(f"📋 TEST CASE #{case_id} {category}")
+        print("=" * 70)
 
-    print("\n--- DEMO 2: CHẠY TRÊN REACT AGENT ---")
-    run_react_agent(sample_query, provider)
+        print("\n--- DEMO 1: CHẠY TRÊN CHATBOT BASELINE ---")
+        run_baseline_chatbot(question, provider)
+
+        print("\n--- DEMO 2: CHẠY TRÊN REACT AGENT ---")
+        run_react_agent(question, provider)
+
+    print("\n" + "=" * 70)
+    print(f"✅ Đã chạy xong toàn bộ {len(tests)} test cases.")
+    print("=" * 70)
