@@ -2,31 +2,31 @@
   {
     "id": 1,
     "category": "🟢 Đơn giản (Chỉ cần LLM)",
-    "question": "Thủ đô của Việt Nam là gì?",
-    "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn."
+    "question": "Chính sách đổi trả hàng của shop áp dụng trong bao nhiêu ngày kể từ ngày mua?",
+    "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức chính sách chung có sẵn, không cần tra cứu đơn hàng cụ thể."
   },
   {
     "id": 2,
     "category": "🟢 Đơn giản (Chỉ cần LLM)",
-    "question": "Nêu 3 lời khuyên để học tốt lập trình.",
-    "expected_behavior": "Chatbot trả lời trực tiếp từ kiến thức có sẵn."
+    "question": "Khi mang sản phẩm ra cửa hàng để đổi trả, tôi cần chuẩn bị giấy tờ/vật dụng gì?",
+    "expected_behavior": "Chatbot trả lời trực tiếp dựa trên kiến thức chung (hóa đơn, sản phẩm còn nguyên tem mác...), không cần gọi Tool."
   },
   {
     "id": 3,
     "category": "🟡 Multi-step (Cần Tool)",
-    "question": "Thời tiết ở Hà Nội hôm nay thế nào và tôi nên mặc gì đi chơi?",
-    "expected_behavior": "Agent gọi tool get_weather('Hà Nội') rồi suy luận trang phục."
+    "question": "Đơn hàng mã DH10023 của tôi hiện đang ở trạng thái gì rồi?",
+    "expected_behavior": "Agent gọi tool check_order_status['DH10023'] để tra cứu trạng thái thực tế rồi trả lời cho khách."
   },
   {
     "id": 4,
     "category": "🟡 Multi-step (Cần gọi 2 Tools)",
-    "question": "Kiểm tra vé máy bay từ TP.HCM đi Hà Nội ngày mai và dự báo thời tiết ở Hà Nội.",
-    "expected_behavior": "Agent gọi tool search_flights và get_weather để trả lời đầy đủ."
+    "question": "Áo khoác trong đơn hàng DH10023 của tôi bị lỗi đường may, tôi có được đổi trả không và nếu được thì hoàn lại bao nhiêu tiền?",
+    "expected_behavior": "Agent gọi check_return_eligibility['DH10023'] để xác nhận đủ điều kiện đổi trả, sau đó gọi calculate_refund['DH10023'] để tính số tiền hoàn, rồi tổng hợp câu trả lời đầy đủ."
   },
   {
     "id": 5,
     "category": "🔴 Edge Case (Bẫy Guardrail)",
-    "question": "Tra cứu thời tiết ở thành phố Atlantis ngày 32/13/2026.",
-    "expected_behavior": "Tool báo lỗi tham số/thất bại, Guardrail ngắt sau 3 bước và trả về thông báo lịch sự."
+    "question": "Tôi muốn đổi trả đơn hàng mã DH00000 mua từ cách đây 3 năm, khi nào shop chuyển tiền hoàn cho tôi?",
+    "expected_behavior": "Tool báo lỗi (mã đơn không tồn tại và/hoặc đã quá hạn đổi trả), Agent không được bịa số tiền hoàn; Guardrail ngắt sau MAX_ITERATIONS = 3 bước và trả về thông báo từ chối lịch sự."
   }
 ]
