@@ -1,0 +1,25 @@
+graph TD
+    A[👤 Người dùng gửi câu hỏi / yêu cầu] --> B{Phân loại loại câu hỏi}
+    
+    %% Đường đi Chatbot Baseline
+    B -- Câu hỏi đơn giản / Chính sách chung / Thắc mắc thường gặp --> C[🤖 Chatbot Baseline Path]
+    C --> D[Trả lời trực tiếp từ tri thức tĩnh của LLM]
+    D --> Output1[🏁 Phản hồi người dùng]
+    
+    %% Đường đi ReAct Agent
+    B -- Yêu cầu tra cứu đơn hàng / Kiểm tra điều kiện / Tạo yêu cầu đổi trả --> E[🧠 ReAct Agent Path]
+    E --> F[Thought 1: Suy luận cần xác thực & tra cứu thông tin đơn]
+    F --> G[Action 1: Gọi Tool get_order_status / check_return_eligibility]
+    G --> H[Observation 1: Nhận kết quả dữ liệu JSON thực tế từ hệ thống]
+    H --> I{Đủ điều kiện & Người dùng đã xác nhận tạo yêu cầu?}
+    I -- Chưa xác nhận / Cần thêm thông tin --> J[Thought 2: Đưa ra thông tin & hỏi xác nhận của người dùng]
+    J --> Output2[🏁 Phản hồi người dùng]
+    I -- Đã đủ thông tin & Khách đồng ý --> K[Action 2: Gọi Tool create_return_request]
+    K --> L[Observation 2: Tạo phiếu đổi/trả thành công]
+    L --> M[Thought 3: Tổng hợp mã phiếu và hướng dẫn cho người dùng]
+    M --> Output3[🏁 Phản hồi người dùng & Cấp mã phiếu]
+    
+    %% Nhánh phanh an toàn Guardrail
+    H -- Tool báo lỗi / Quá hạn / Quá 3 bước --> N{Số bước >= MAX_ITERATIONS?}
+    N -- Đúng --> O[🛡️ GUARDRAIL TRIGGERED: Ngắt vòng lặp an toàn]
+    O --> Output4[🏁 Thông báo lỗi / Từ chối lịch sự]
